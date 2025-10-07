@@ -66,6 +66,7 @@ h1 {
     border-color: #B71C1C;
 }
 
-.btn:hover {
+.btn
+:hover {
     background-color: #333;
 }
