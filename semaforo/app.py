@@ -1,42 +1,40 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import threading
 import time
-import serial
-
-# ⚠️ Altere para a porta correta (ex: COM3 no Windows ou /dev/ttyUSB0 no Linux)
-arduino = serial.Serial('COM4', 9600, timeout=1)
 
 app = Flask(__name__)
 
-semaforo = {"cor": "vermelho"}
-
-def enviar_para_arduino(cor):
-    if arduino.is_open:
-        arduino.write((cor.upper() + '\n').encode())
+semaforo = {"cor": "vermelho", "piscar": False}
 
 def ciclo_semaforo():
     while True:
+        # Verde aceso
         semaforo["cor"] = "verde"
-        enviar_para_arduino("VERDE")
+        semaforo["piscar"] = False
         time.sleep(5)
 
+        # Amarelo aceso
         semaforo["cor"] = "amarelo"
-        enviar_para_arduino("AMARELO")
+        semaforo["piscar"] = False
         time.sleep(2)
 
+        # Vermelho piscando por 5 segundos (piscar a cada 0.5 seg)
         semaforo["cor"] = "vermelho"
-        enviar_para_arduino("VERMELHO")
-        time.sleep(5)
+        for _ in range(10):
+            semaforo["piscar"] = True
+            time.sleep(0.5)
+            semaforo["piscar"] = False
+            time.sleep(0.5)
 
 threading.Thread(target=ciclo_semaforo, daemon=True).start()
 
 @app.route("/")
 def index():
-    return render_template("index.html", cor=semaforo["cor"])
+    return render_template("index.html")
 
 @app.route("/status")
 def status():
-    return semaforo["cor"]
+    return jsonify(semaforo)
 
 if __name__ == "__main__":
     app.run(debug=True)

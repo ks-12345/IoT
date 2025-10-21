@@ -1,28 +1,72 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Semáforo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-        function atualizar() {
-            fetch("/status")
-                .then(resp => resp.text())
-                .then(cor => {
-                    document.querySelectorAll(".luz").forEach(el => el.className = "luz");
-                    document.getElementById(cor).classList.add(cor);
-                });
+    <meta charset="UTF-8" />
+    <title>Semáforo Piscante</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 30px; }
+        .semaforo { width: 100px; margin: 0 auto; }
+        .luz {
+            width: 80px;
+            height: 80px;
+            margin: 10px auto;
+            border-radius: 50%;
+            background-color: gray;
+            transition: background-color 0.3s;
         }
-        setInterval(atualizar, 1000);
-        window.onload = atualizar;
-    </script>
+        .verde { background-color: green; }
+        .amarelo { background-color: yellow; }
+        .vermelho { background-color: red; }
+        .apagado { background-color: gray !important; }
+    </style>
 </head>
 <body>
-    <h1>Semáforo Simples</h1>
+    <h1>Semáforo com Vermelho Piscando</h1>
     <div class="semaforo">
         <div class="luz" id="vermelho"></div>
         <div class="luz" id="amarelo"></div>
         <div class="luz" id="verde"></div>
     </div>
+    <h2 id="texto-cor">Carregando...</h2>
+
+    <script>
+        async function atualizar() {
+            const res = await fetch("/status");
+            const data = await res.json();
+
+            const { cor, piscar } = data;
+
+            // Resetar todas as luzes
+            document.querySelectorAll('.luz').forEach(el => {
+                el.className = 'luz apagado';
+            });
+
+            if(cor === 'vermelho') {
+                // Se estiver piscando, alterna ligado/desligado a cada chamada
+                if(piscar) {
+                    // Pisca: alterna cor ligada e apagada a cada atualização
+                    if(!window.piscarEstado) window.piscarEstado = false;
+                    window.piscarEstado = !window.piscarEstado;
+                    if(window.piscarEstado) {
+                        document.getElementById('vermelho').className = 'luz vermelho';
+                        document.getElementById('texto-cor').textContent = "Vermelho piscando";
+                    } else {
+                        document.getElementById('texto-cor').textContent = "Vermelho piscando";
+                    }
+                } else {
+                    // Vermelho ligado normal (quando não está piscando)
+                    document.getElementById('vermelho').className = 'luz vermelho';
+                    document.getElementById('texto-cor').textContent = "Vermelho";
+                }
+            } else {
+                // Se for verde ou amarelo, acende normalmente
+                document.getElementById(cor).className = 'luz ' + cor;
+                document.getElementById('texto-cor').textContent = cor.charAt(0).toUpperCase() + cor.slice(1);
+            }
+        }
+
+        setInterval(atualizar, 500);
+        window.onload = atualizar;
+    </script>
 </body>
 </html>
