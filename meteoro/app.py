@@ -11,12 +11,20 @@ umidade_atual = None
 
 estado_leds = {1: False, 2: False}
 
-# Abra a porta serial (troque 'COM3' pelo seu dispositivo, ou '/dev/ttyUSB0' no Linux)
-ser = serial.Serial('COM3', 9600, timeout=1)
+# Tente abrir a porta serial (troque 'COM3' pela sua porta correta)
+try:
+    ser = serial.Serial('COM3', 9600, timeout=1)
+    print("Porta serial aberta com sucesso.")
+except serial.SerialException:
+    print("Erro: Porta serial não encontrada. Verifique a conexão e a porta.")
+    ser = None
 
 def ler_serial():
     global temperatura_atual, umidade_atual
     while True:
+        if ser is None:
+            time.sleep(1)
+            continue
         try:
             linha = ser.readline().decode('utf-8').strip()
             if linha:
